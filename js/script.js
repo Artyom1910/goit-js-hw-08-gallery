@@ -1,75 +1,67 @@
-import galleryItems from './gallery-items.js';
+import * as galleryItems from './gallery-items.js';
 
-const preview = document.querySelector('.js-gallery');
-const modal = document.querySelector('.lightbox');
-const btn = document.querySelector('.lightbox__button');
-const modalImg = document.querySelector('.lightbox__image');
-let currentIndex = 0;
-galleryItems.forEach((item, i) => {
-  const listItem = `<li class="gallery__item">
-    <a
-    class="gallery__link"
-    href="${item.preview}"
-    >
-    <img
-        class="gallery__image"
-        src="${item.preview}"
-        data-source="${item.original}"
-        alt="${item.description}"
-        data-index ="${i}"
-    />
-    </a>
-</li>`;
+const galleryArray = galleryItems.default;
 
-  preview.innerHTML += listItem;
+const galleryList = document.querySelector('.js-gallery');
+
+const liRefs = galleryArray.map(({ ...galleryArray }) => {
+  const makeLi = document.createElement('li');
+  makeLi.classList.add('gallery__item');
+
+  const makeLink = document.createElement('a');
+  makeLink.classList.add('gallery__link');
+  makeLink.setAttribute('href', galleryArray.original);
+
+  const makeImg = document.createElement('img');
+  makeImg.classList.add('gallery__image');
+  makeImg.setAttribute('src', galleryArray.preview);
+  makeImg.setAttribute('data-source', galleryArray.original);
+  makeImg.setAttribute('alt', galleryArray.description);
+
+  makeLi.append(makeLink);
+  makeLink.append(makeImg);
+  return makeLi;
 });
 
-function previewClick(event) {
-  event.preventDefault();
+galleryList.append(...liRefs);
 
+const lightBoxRef = document.querySelector('.js-lightbox');
+const bigImg = document.querySelector('.lightbox__image');
+const closeLightboxBtn = document.querySelector(
+  'button[data-action="close-lightbox"]',
+);
+const lightboxOverley = document.querySelector('.lightbox__overlay');
+
+function galleryListHandler(event) {
+  event.preventDefault();
   if (event.target.nodeName !== 'IMG') {
     return;
   }
-
-  let bigImg = event.target;
-
-  openModal(bigImg);
+  lightBoxRef.classList.add('is-open');
+  bigImg.setAttribute('src', event.target.dataset.source);
+  window.addEventListener('keydown', closeLightBoxByEsc);
 }
 
-function openModal(img = {}) {
-  modalImg.src = img.dataset.source;
-  modalImg.alt = img.alt;
-  currentIndex = img.dataset.index;
-  modal.classList.add('is-open');
-  modal.addEventListener('click', modalClick);
-
-  window.addEventListener('keydown', keyHendler);
+function closeLightBoxByBtn() {
+  lightBoxRef.classList.remove('is-open');
+  bigImg.setAttribute('src', '');
 }
 
-function keyHendler(event) {
-  const key = event.code;
-  switch (key) {
-    case 'Escape':
-      closeModal();
-      break;
-    case 'ArrowRight':
-      onArrowRight();
-      break;
-    case 'ArrowLeft':
-      onArrowLeft();
-      break;
+function closeLightBoxByEsc(event) {
+  if (event.code === 'Escape') {
+    closeLightBoxByBtn();
+    window.removeEventListener('keydown', closeLightBoxByEsc);
   }
 }
 
-function modalClick(event) {
-  if (event.target.nodeName === 'BUTTON' || event.target.nodeName === 'DIV') {
-    closeModal();
+function closeLightBoxByClick(event) {
+  if (event.target === event.currentTarget) {
+    closeLightBoxByBtn();
   }
 }
 
-function closeModal() {
-  window.removeEventListener('keydown', keyHendler);
-  modal.classList.remove('is-open');
-}
+galleryList.addEventListener('click', galleryListHandler);
 
-preview.addEventListener('click', previewClick);
+closeLightboxBtn.addEventListener('click', closeLightBoxByBtn);
+
+lightboxOverley.addEventListener('click', closeLightBoxByClick);
